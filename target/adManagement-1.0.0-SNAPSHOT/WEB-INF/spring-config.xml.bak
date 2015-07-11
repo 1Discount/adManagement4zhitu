@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-3.0.xsd
+       	http://www.springframework.org/schema/aop   
+       	http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
+
+	<context:property-placeholder location="classpath:admin.properties" />
+
+	<context:component-scan base-package="com.imzhitu.adManagement" />
+
+	<context:annotation-config />
+
+	<bean id="masterDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		<property name="driverClass" value="com.mysql.jdbc.Driver"></property>
+		<property name="jdbcUrl" value="${database.master.jdbcUrl}"></property>
+		<property name="user" value="${database.master.user}" />
+		<property name="password" value="${database.master.password}" />
+		<property name="maxPoolSize" value="${database.master.maxPoolSize}"></property>
+		<property name="minPoolSize" value="${database.master.minPoolSize}"></property>
+		<property name="maxIdleTime" value="${database.master.maxIdleTime}"></property>
+		<property name="idleConnectionTestPeriod" value="${database.master.idleConnectionTestPeriod}"></property>
+	</bean>
+
+	<bean id="slaveDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		<property name="driverClass" value="com.mysql.jdbc.Driver"></property>
+		<property name="jdbcUrl" value="${database.slave.jdbcUrl}"></property>
+		<property name="user" value="${database.slave.user}" />
+		<property name="password" value="${database.slave.password}" />
+		<property name="maxPoolSize" value="${database.slave.maxPoolSize}"></property>
+		<property name="minPoolSize" value="${database.slave.minPoolSize}"></property>
+		<property name="maxIdleTime" value="${database.slave.maxIdleTime}"></property>
+		<property name="idleConnectionTestPeriod" value="${database.slave.idleConnectionTestPeriod}"></property>
+	</bean>
+
+	<bean id="dataSource"
+		class="com.imzhitu.adManagement.dataSource.DynamicDataSource">
+		<property name="targetDataSources">
+			<map key-type="java.lang.String">
+				<entry key="master" value-ref="masterDataSource" />
+				<entry key="slave" value-ref="slaveDataSource" />
+			</map>
+		</property>
+		<property name="defaultTargetDataSource" ref="masterDataSource" />
+	</bean>
+	<!-- 配置数据库注解aop -->
+	<aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+	<bean id="dataSourceAspect"
+		class="com.imzhitu.adManagement.dataSource.DataSourceAspect" />
+	<aop:config>
+		<aop:aspect id="dataSourceCut" ref="dataSourceAspect">
+			<aop:pointcut expression="execution(* com.imzhitu.adManagement.*.mapper.*.*(..))"
+				id="dataSourceCutPoint" />
+			<aop:before pointcut-ref="dataSourceCutPoint" method="before" />
+		</aop:aspect>
+	</aop:config>
+
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean" autowire="byName">
+		<property name="configLocation" value="classpath:mybatis-config.xml" />
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.imzhitu.adManagement.**.mapper" />
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+	</bean>
+
+</beans>

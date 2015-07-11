@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE struts PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 2.3//EN" 
+	"http://struts.apache.org/dtds/struts-2.3.dtd">
+
+<struts>
+
+	<package name="root" namespace="/" extends="struts-default">
+	
+		<action name="">
+			<result type="dispatcher">/index.htm</result>
+		</action>
+		
+	</package>
+	
+	<package name="adManagement" namespace="/op" extends="json-default">
+	
+		<action name="op_*" class="com.imzhitu.adManagement.op.OpHTWorldCommentAction" method="{1}">
+			<result name="json" type="json">
+				<param name="root">jsonMap</param>
+			</result>
+		</action>
+		
+	</package>
+	
+</struts>
+
+
